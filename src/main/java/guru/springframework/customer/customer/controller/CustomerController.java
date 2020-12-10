@@ -1,11 +1,17 @@
 package guru.springframework.customer.customer.controller;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +41,7 @@ public class CustomerController {
 	}
 	
 	@PostMapping
-	public ResponseEntity<Void> handlePost(@RequestBody CustomerDto customerDto) {
+	public ResponseEntity<Void> handlePost(@Valid @RequestBody CustomerDto customerDto) {
 		CustomerDto saveDto = customerService.saveCustomer(customerDto);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Location", "api/v1/customer/" + saveDto.getId());
@@ -47,16 +53,28 @@ public class CustomerController {
 //	}
 	
 	@PutMapping("/{customerId}")
-	public ResponseEntity<HttpStatus> handleUpdate(@PathVariable("customerId")  UUID customerId, @RequestBody CustomerDto customerDto) {
+	public ResponseEntity<HttpStatus> handleUpdate(@PathVariable("customerId") UUID customerId,
+			@Valid @RequestBody CustomerDto customerDto) {
 		customerService.updateCustomer(customerId, customerDto);
 		return new ResponseEntity<HttpStatus>(HttpStatus.NO_CONTENT);
 	}
 	
 	@DeleteMapping("/{customerId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	// @ResponseStatus(HttpStatus.BAD_REQUEST)
 	public void deleteCustomer(@PathVariable("customerId") UUID customerId) {
 		customerService.deleteCustomer(customerId);
 	}
 	
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<List<String>> validationErrorHandler(ConstraintViolationException e) {
+		List<String> errors = new ArrayList<>(e.getConstraintViolations().size());
+
+		e.getConstraintViolations().forEach(constrainViolation -> errors
+				.add(constrainViolation.getPropertyPath() + " : " + constrainViolation.getMessage()));
+
+		return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+
+	}
 	
 }
