@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,22 +22,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import guru.springframework.customer.customer.mapper.CustomerMapper;
 import guru.springframework.customer.customer.services.CustomerService;
+import guru.springframework.customer.customer.web.module.Customer;
 import guru.springframework.customer.customer.web.module.CustomerDto;
 
 @RequestMapping("/api/v1/customer")
 @RestController
 public class CustomerController {
 	
-	private final CustomerService customerService;
+	@Autowired
+	private CustomerService customerService;
 	
-	public CustomerController(CustomerService customerService) {
-		super();
-		this.customerService = customerService;
-	}
+	@Autowired
+	private CustomerMapper mapper;
 
 	@GetMapping("/{customerId}")
 	public ResponseEntity<CustomerDto> getCustomer(@PathVariable("customerId")  UUID customerId) {
+		Customer customer = mapper.toCustomer(CustomerDto.builder().id(UUID.randomUUID()).build());
 		return new ResponseEntity<CustomerDto>(this.customerService.getCustomerById(customerId), HttpStatus.OK);
 	}
 	
